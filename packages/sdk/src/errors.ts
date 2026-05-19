@@ -43,7 +43,8 @@ export type SdkErrorTag =
   | 'response_parse_error'
   | 'template_parameter_missing'
   | 'unexpected_response'
-  | 'network_error';
+  | 'network_error'
+  | 'invalid_action_url';
 
 /**
  * Base class for every error this SDK throws. A `tag` field discriminates the
@@ -125,6 +126,11 @@ export class UnexpectedResponseError extends SdkError {
 /** A transport-level error reaching the Endpoint (DNS, TLS, timeout, abort). */
 export class NetworkError extends SdkError {
   readonly tag = 'network_error' as const;
+}
+
+/** The provided string is not a valid Action URL per §5. */
+export class InvalidActionUrlError extends SdkError {
+  readonly tag = 'invalid_action_url' as const;
 }
 
 const wireErrorTags: ReadonlySet<string> = new Set(WIRE_ERROR_CODES);
