@@ -2,6 +2,8 @@ import { SdkError } from '@ckb-actions/sdk';
 import { useState, type FormEvent } from 'react';
 import { fetchManifest } from '../lib/api';
 import { useActionStore } from '../lib/store';
+import { Button } from './ds/Button';
+import { Input } from './ds/Input';
 
 export function UrlInput() {
   const { url, phase, setUrl, startFetching, setManifest, setError } = useActionStore();
@@ -24,22 +26,25 @@ export function UrlInput() {
   const isBusy = phase === 'fetching';
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full gap-2">
-      <input
-        type="text"
+    <form onSubmit={onSubmit} className="flex gap-0">
+      <Input
+        mono
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        placeholder="ckb-action:https://… or https://…"
-        className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-slate-500 focus:outline-none"
+        placeholder="ckb-action://publisher.example/swap?…"
+        className="flex-1"
+        aria-label="Action URL"
         disabled={isBusy}
       />
-      <button
+      <Button
         type="submit"
+        variant="primary"
+        size="md"
         disabled={isBusy || draft.trim().length === 0}
-        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="ml-px"
       >
-        {isBusy ? 'Fetching…' : 'Load action'}
-      </button>
+        {isBusy ? 'Loading…' : 'Open'}
+      </Button>
     </form>
   );
 }

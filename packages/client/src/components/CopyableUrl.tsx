@@ -1,3 +1,4 @@
+import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 interface CopyableUrlProps {
@@ -13,19 +14,22 @@ export function CopyableUrl({ url }: CopyableUrlProps) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      // ignore — older browsers, no permission
+      /* clipboard not available */
     }
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-      <code className="flex-1 break-all font-mono text-xs text-slate-800">{url}</code>
+    <div className="flex items-stretch gap-0 border border-[var(--color-border-hairline)] bg-[var(--color-bg-inset)]">
+      <code className="flex-1 px-3 py-2 break-all text-mono-sm text-[var(--color-text-primary)]">
+        {url}
+      </code>
       <button
         type="button"
         onClick={onCopy}
-        className="shrink-0 rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white hover:bg-slate-700"
+        className="shrink-0 inline-flex items-center gap-2 px-3 border-l border-[var(--color-border-hairline)] text-label text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors duration-[80ms]"
       >
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? <Check size={14} strokeWidth={1.5} /> : <Copy size={14} strokeWidth={1.5} />}
+        <span>{copied ? 'Copied' : 'Copy'}</span>
       </button>
     </div>
   );

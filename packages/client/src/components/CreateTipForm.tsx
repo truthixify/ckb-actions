@@ -1,6 +1,10 @@
 import { ccc } from '@ckb-ccc/connector-react';
+import { Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useActionStore } from '../lib/store';
+import { Button } from './ds/Button';
+import { Card } from './ds/Card';
+import { Field, Input } from './ds/Input';
 import { CopyableUrl } from './CopyableUrl';
 
 const TIP_PATH = '/actions/tip-jar';
@@ -35,58 +39,47 @@ export function CreateTipForm() {
     : '';
 
   return (
-    <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <header>
-        <h2 className="text-lg font-semibold text-slate-900">Create a tip jar URL</h2>
-        <p className="text-sm text-slate-600">
-          Share the generated URL — anyone who opens it can tip you.
+    <Card variant="review" padding="primary" className="flex flex-col gap-6">
+      <div>
+        <h2 className="text-heading-2">Tip jar URL</h2>
+        <p className="mt-1 text-body text-[var(--color-text-secondary)]">
+          Anyone who opens this URL can tip the recipient.
         </p>
-      </header>
-
-      <div className="space-y-1">
-        <label htmlFor="server-url" className="block text-xs font-medium text-slate-700">
-          Action server
-        </label>
-        <input
-          id="server-url"
-          type="text"
-          value={serverBaseUrl}
-          onChange={(e) => setServerBaseUrl(e.target.value)}
-          className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm"
-        />
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="tip-recipient" className="block text-xs font-medium text-slate-700">
-          Recipient (CKB testnet address)
-        </label>
-        <div className="flex items-center gap-2">
-          <input
+      <Field label="Action server" htmlFor="server-url-tip">
+        <Input
+          id="server-url-tip"
+          mono
+          value={serverBaseUrl}
+          onChange={(e) => setServerBaseUrl(e.target.value)}
+        />
+      </Field>
+
+      <Field label="Recipient (CKB testnet address)" htmlFor="tip-recipient">
+        <div className="flex gap-0">
+          <Input
             id="tip-recipient"
-            type="text"
+            mono
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="ckt1q…"
-            className="flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm"
+            className="flex-1"
           />
           {!signer && (
-            <button
-              type="button"
-              onClick={open}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
-            >
+            <Button variant="secondary" size="md" onClick={open} className="ml-px shrink-0">
+              <Wallet size={14} strokeWidth={1.5} />
               Use wallet
-            </button>
+            </Button>
           )}
         </div>
-      </div>
+      </Field>
 
       {manifestUrl && (
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-slate-700">Shareable tip URL</div>
+        <Field label="Shareable URL">
           <CopyableUrl url={manifestUrl} />
-        </div>
+        </Field>
       )}
-    </section>
+    </Card>
   );
 }

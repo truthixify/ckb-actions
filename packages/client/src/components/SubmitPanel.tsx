@@ -1,8 +1,14 @@
 import { SdkError, UnsupportedNetworkError, type ActionItem, type Network } from '@ckb-actions/sdk';
 import { ccc } from '@ckb-ccc/connector-react';
+import { ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { postCallback, submitAction } from '../lib/api';
 import { isParamsComplete, useActionStore } from '../lib/store';
+import { cn, explorerTxUrl, truncateMiddle } from '../lib/utils';
+import { Button } from './ds/Button';
+import { Card } from './ds/Card';
+import { MonoValue } from './ds/Mono';
+import { StatusDot } from './ds/StatusDot';
 
 const NETWORK_PREFIX: Record<Network, string> = { mainnet: 'ckb', testnet: 'ckt' };
 
@@ -55,21 +61,19 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
 
   if (!signer) {
     return (
-      <div className="space-y-2 rounded-md bg-slate-100 p-3 text-sm">
-        <p className="text-slate-700">Connect a wallet to continue.</p>
-        <button
-          type="button"
-          onClick={open}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
-        >
+      <Card variant="inset" padding="default" className="flex items-center justify-between">
+        <span className="text-body-sm text-[var(--color-text-secondary)]">
+          Connect a wallet to continue.
+        </span>
+        <Button variant="primary" size="sm" onClick={open}>
           Connect wallet
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   if (!address) {
-    return <p className="text-xs text-slate-500">Loading address…</p>;
+    return <p className="text-body-sm text-[var(--color-text-muted)]">Loading address…</p>;
   }
 
   const isComplete = isParamsComplete(action.parameters, paramValues);
@@ -103,22 +107,13 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
     setSigning();
     try {
       const tx = ccc.Transaction.fromBytes(ccc.bytesFrom(response.otx));
-
-      // The OTX from an Action Endpoint specifies outputs (and sometimes
-      // publisher-owned inputs); the consumer wallet must fund the rest.
-      // CCC does NOT auto-collect inputs from sendTransaction — without
-      // these two calls the chain rejects with Transaction(Empty(Inputs)).
       await tx.completeInputsByCapacity(signer);
       await tx.completeFeeBy(signer);
-
       const txLike = tx as unknown as Parameters<typeof signer.sendTransaction>[0];
       const hash = await signer.sendTransaction(txLike);
       setSent(hash);
-
       if (response.callback) {
         await postCallback(url, response.callback, hash).catch(() => {
-          // Callback failure does not undo the on-chain payment; warn
-          // rather than overwriting the success state.
           console.warn('callback POST failed; tx already on chain');
         });
       }
@@ -130,70 +125,95 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-md bg-white p-2 text-xs text-slate-600">
-        <div className="font-medium uppercase tracking-wider text-slate-500">Wallet address</div>
-        <div className="mt-1 break-all font-mono text-slate-800">{address}</div>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-label text-[var(--color-text-secondary)]">Wallet</span>
+        <MonoValue value={address} size="sm" />
       </div>
 
       {!response && phase !== 'submitting' && (
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={!isComplete}
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button variant="primary" size="md" fullWidth onClick={onSubmit} disabled={!isComplete}>
           {phase === 'error' ? `Try again — ${action.label}` : action.label}
-        </button>
+        </Button>
       )}
 
       {phase === 'submitting' && (
-        <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Requesting OTX from action endpoint…
-        </div>
+        <Card variant="surface" padding="default" className="flex items-center gap-3">
+          <StatusDot tone="accent" size={10} pulse />
+          <span className="text-body-sm text-[var(--color-text-primary)]">
+            Requesting OTX from action endpoint…
+          </span>
+        </Card>
       )}
 
       {response && (
-        <div className="space-y-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-          <div className="font-medium">Action endpoint returned an OTX</div>
-          {response.message && <div className="text-emerald-800">{response.message}</div>}
-          <div className="font-mono break-all text-emerald-700">
-            {response.encoding}: {response.otx.slice(0, 80)}…
+        <Card variant="inset" padding="default" className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-label text-[var(--color-text-secondary)]">Open transaction</span>
+            <span className="text-mono-sm text-[var(--color-text-muted)]">{response.encoding}</span>
           </div>
-          {response.callback && (
-            <div className="text-emerald-700">callback: {response.callback}</div>
+          {response.message && (
+            <p className="text-body-sm text-[var(--color-text-primary)]">{response.message}</p>
           )}
-        </div>
+          <pre className="text-mono-sm text-[var(--color-text-muted)] overflow-x-auto whitespace-pre break-all">
+            {response.otx.slice(0, 120)}
+            {response.otx.length > 120 ? '…' : ''}
+          </pre>
+          {response.callback && (
+            <div className="flex items-center justify-between text-mono-sm text-[var(--color-text-muted)]">
+              <span className="text-label">Callback</span>
+              <span>{response.callback}</span>
+            </div>
+          )}
+        </Card>
       )}
 
       {response && (phase === 'received' || phase === 'error') && (
-        <button
-          type="button"
-          onClick={onSignAndSend}
-          className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-500"
-        >
+        <Button variant="primary" size="md" fullWidth onClick={onSignAndSend}>
           {phase === 'error' ? 'Retry — Sign & send' : 'Sign & send with wallet'}
-        </button>
+        </Button>
       )}
 
       {phase === 'signing' && (
-        <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Confirm in your wallet…
-        </div>
+        <Card variant="surface" padding="default" className="flex items-center gap-3">
+          <StatusDot tone="accent" size={10} pulse />
+          <span className="text-body-sm text-[var(--color-text-primary)]">
+            Confirm in your wallet…
+          </span>
+        </Card>
       )}
 
-      {phase === 'sent' && txHash && (
-        <div className="space-y-1 rounded-md bg-emerald-100 px-3 py-2 text-xs text-emerald-900">
-          <div className="font-medium">Transaction submitted</div>
-          <div className="break-all font-mono text-emerald-800">{txHash}</div>
-        </div>
+      {phase === 'sent' && txHash && manifest && (
+        <Card variant="surface" padding="default" className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <StatusDot tone="success" size={10} />
+            <span className="text-heading-3">Transaction submitted</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-label text-[var(--color-text-secondary)]">Hash</span>
+            <a
+              href={explorerTxUrl(manifest.network, txHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'inline-flex items-center gap-2 text-mono break-all',
+                'text-[var(--color-text-primary)] hover:text-[var(--color-accent)]',
+                'transition-colors duration-[80ms]',
+              )}
+              title={txHash}
+            >
+              <span className="truncate">{truncateMiddle(txHash, 14, 8)}</span>
+              <ExternalLink size={14} strokeWidth={1.5} className="shrink-0" />
+            </a>
+          </div>
+        </Card>
       )}
 
       {error && (
-        <div className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-800">
-          <div className="font-medium">{error.tag}</div>
-          <div className="mt-0.5">{error.message}</div>
-        </div>
+        <Card variant="inset" padding="default" className="flex flex-col gap-1">
+          <span className="text-label text-[var(--color-danger)]">{error.tag}</span>
+          <span className="text-body-sm text-[var(--color-text-primary)]">{error.message}</span>
+        </Card>
       )}
     </div>
   );

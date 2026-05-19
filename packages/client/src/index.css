@@ -1,13 +1,162 @@
 @import 'tailwindcss';
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/*
+ * CKB Action Links — Design Tokens
+ * Precision instrument. Zero radius. Hairline borders. No gradients.
+ */
+@theme inline {
+  --color-bg-base: #0a0b0e;
+  --color-bg-surface: #13151a;
+  --color-bg-elevated: #1c1f26;
+  --color-bg-inset: #070809;
+
+  --color-border-hairline: #262a33;
+  --color-border-strong: #3a3f4a;
+  --color-border-emphasis: #ff5722;
+
+  --color-text-primary: #f5f6f8;
+  --color-text-secondary: #969aa5;
+  --color-text-muted: #5e6470;
+  --color-text-inverse: #0a0b0e;
+
+  --color-accent: #ff5722;
+  --color-accent-hover: #ff7043;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-network-mainnet: #22c55e;
+  --color-network-testnet: #f59e0b;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-full: 9999px;
+}
+
 @layer base {
+  * {
+    border-color: var(--color-border-hairline);
+  }
   html,
   body,
   #root {
     height: 100%;
   }
-
+  html,
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+  }
+  *:focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .text-display-1 {
+    font-family: var(--font-display);
+    font-size: 48px;
+    line-height: 56px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .text-heading-1 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .text-heading-2 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .text-heading-3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .text-body {
+    font-size: 15px;
+    line-height: 24px;
+    font-weight: 400;
+  }
+  .text-body-sm {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+  .text-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .text-mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+  .text-mono-sm {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
+  }
+  .pulse-signing {
+    animation: pulse-signing 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-signing {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

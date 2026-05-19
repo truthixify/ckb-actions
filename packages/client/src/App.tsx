@@ -2,50 +2,68 @@ import { useActionStore } from './lib/store';
 import { CreateInvoiceForm } from './components/CreateInvoiceForm';
 import { CreateTipForm } from './components/CreateTipForm';
 import { ManifestCard } from './components/ManifestCard';
+import { TopBar } from './components/TopBar';
 import { UrlInput } from './components/UrlInput';
 import { ViewSwitch } from './components/ViewSwitch';
+import { Card } from './components/ds/Card';
 
 export function App() {
   const { view, phase, error } = useActionStore();
 
   return (
-    <div className="min-h-screen px-4 py-10">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">CKB Action Links</h1>
-          <p className="text-sm text-slate-600">
-            {view === 'preview'
-              ? 'Paste an action URL to preview the transaction; the wallet signs and submits.'
-              : 'Generate a shareable URL someone can open to pay you.'}
-          </p>
-        </header>
+    <div className="min-h-dvh flex flex-col">
+      <TopBar />
 
-        <ViewSwitch />
+      <main className="flex-1 px-6 py-10">
+        <div className="mx-auto w-full max-w-[640px] flex flex-col gap-8">
+          <header className="flex flex-col gap-3">
+            <h1 className="text-heading-1 text-[var(--color-text-primary)]">
+              {view === 'preview' ? 'Preview a transaction' : 'Create a shareable URL'}
+            </h1>
+            <p className="text-body text-[var(--color-text-secondary)] max-w-[480px]">
+              {view === 'preview'
+                ? 'Paste an Action URL to review the requested transaction and sign it with your wallet. The client never holds keys.'
+                : 'Generate a tip or invoice URL anyone can open to pay you. The recipient is your wallet.'}
+            </p>
+            <div className="pt-2">
+              <ViewSwitch />
+            </div>
+          </header>
 
-        {view === 'preview' && (
-          <>
-            <UrlInput />
+          {view === 'preview' && (
+            <div className="flex flex-col gap-6">
+              <UrlInput />
 
-            {phase === 'fetching' && <p className="text-sm text-slate-500">Fetching manifest…</p>}
+              {phase === 'fetching' && (
+                <p className="text-body-sm text-[var(--color-text-muted)]">Fetching manifest…</p>
+              )}
 
-            {phase === 'error' && error && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm">
-                <div className="font-medium text-rose-900">{error.tag}</div>
-                <div className="mt-0.5 text-rose-800">{error.message}</div>
-              </div>
-            )}
+              {phase === 'error' && error && !useActionStore.getState().manifest && (
+                <Card variant="inset" padding="default" className="flex flex-col gap-1">
+                  <span className="text-label text-[var(--color-danger)]">{error.tag}</span>
+                  <span className="text-body-sm text-[var(--color-text-primary)]">
+                    {error.message}
+                  </span>
+                </Card>
+              )}
 
-            <ManifestCard />
-          </>
-        )}
+              <ManifestCard />
+            </div>
+          )}
 
-        {view === 'create' && (
-          <>
-            <CreateTipForm />
-            <CreateInvoiceForm />
-          </>
-        )}
-      </div>
+          {view === 'create' && (
+            <div className="flex flex-col gap-6">
+              <CreateTipForm />
+              <CreateInvoiceForm />
+            </div>
+          )}
+        </div>
+      </main>
+
+      <footer className="px-6 py-4 text-mono-sm text-[var(--color-text-muted)] flex justify-between max-w-[1200px] mx-auto w-full">
+        <span>CKB Action Links — reference client</span>
+        <span>v0.1.0</span>
+      </footer>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { cn } from '../lib/utils';
 import { useActionStore, type View } from '../lib/store';
 
 const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
@@ -9,7 +10,7 @@ export function ViewSwitch() {
   const { view, setView } = useActionStore();
 
   return (
-    <nav className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+    <nav className="inline-flex border border-[var(--color-border-hairline)] bg-[var(--color-bg-surface)]">
       {VIEWS.map((v) => {
         const isActive = view === v.id;
         return (
@@ -17,10 +18,12 @@ export function ViewSwitch() {
             key={v.id}
             type="button"
             onClick={() => setView(v.id)}
-            className={
-              'rounded-md px-3 py-1.5 text-xs font-medium transition ' +
-              (isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100')
-            }
+            className={cn(
+              'h-9 px-4 text-label transition-colors duration-[80ms]',
+              isActive
+                ? 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)]',
+            )}
           >
             {v.label}
           </button>

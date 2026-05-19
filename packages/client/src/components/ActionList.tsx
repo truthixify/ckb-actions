@@ -1,4 +1,8 @@
+import { Fragment } from 'react';
+import { cn } from '../lib/utils';
 import { useActionStore } from '../lib/store';
+import { Button } from './ds/Button';
+import { Card } from './ds/Card';
 import { ParameterForm } from './ParameterForm';
 import { SubmitPanel } from './SubmitPanel';
 
@@ -7,28 +11,35 @@ export function ActionList() {
   if (!manifest) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {manifest.links.actions.map((action, idx) => {
         const isSelected = selectedAction === action;
+        const isPrimary = idx === 0;
         return (
-          <div key={`${action.label}-${idx}`} className="rounded-lg border border-slate-200">
-            <button
-              type="button"
+          <Fragment key={`${action.label}-${idx}`}>
+            <Button
+              variant={isPrimary ? 'primary' : 'secondary'}
+              size="lg"
+              fullWidth
               onClick={() => selectAction(isSelected ? null : action)}
-              className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition hover:bg-slate-50"
+              className={cn('justify-between', isSelected && 'border border-[var(--color-accent)]')}
             >
-              <span className="text-sm font-medium text-slate-900">{action.label}</span>
-              <span className="text-xs text-slate-500">
-                {action.parameters?.length ? `${action.parameters.length} param(s)` : 'no params'}
+              <span>{action.label}</span>
+              <span className="text-label text-[var(--color-text-secondary)] opacity-70">
+                {action.parameters?.length
+                  ? `${action.parameters.length} param${action.parameters.length === 1 ? '' : 's'}`
+                  : 'no params'}
               </span>
-            </button>
+            </Button>
             {isSelected && (
-              <div className="space-y-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
-                <ParameterForm action={action} />
+              <Card variant="inset" padding="default" className="flex flex-col gap-4">
+                {action.parameters && action.parameters.length > 0 && (
+                  <ParameterForm action={action} />
+                )}
                 <SubmitPanel action={action} />
-              </div>
+              </Card>
             )}
-          </div>
+          </Fragment>
         );
       })}
     </div>
