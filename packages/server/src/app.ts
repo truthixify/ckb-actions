@@ -37,7 +37,14 @@ export function createApp({ config, logger }: AppDeps): Express {
 
   app.use(requestIdMiddleware);
   app.use(requestLoggerMiddleware(logger));
-  app.use(cors({ origin: config.CORS_ORIGIN }));
+  app.use(
+    cors({
+      origin: config.CORS_ORIGIN,
+      // Without this the browser strips X-CKB-Action from fetch responses,
+      // and SDK clients fail manifest validation per §6.1.
+      exposedHeaders: ['X-CKB-Action', 'X-Request-Id'],
+    }),
+  );
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.use(healthRouter);
