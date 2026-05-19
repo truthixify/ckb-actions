@@ -51,9 +51,13 @@ describe('CORS', () => {
   });
 });
 
+const SAMPLE_TESTNET_ADDRESS =
+  'ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwdehxumnwdehxumnwdehxumnwdehxumnghf47ya';
+const TIP_RECIPIENT_QS = `recipient=${encodeURIComponent(SAMPLE_TESTNET_ADDRESS)}`;
+
 describe('GET /actions/tip-jar (mounted example)', () => {
-  it('serves the tip jar manifest with X-CKB-Action: true', async () => {
-    const res = await request(app).get('/actions/tip-jar');
+  it('serves the tip jar manifest with X-CKB-Action: true when a recipient is supplied', async () => {
+    const res = await request(app).get(`/actions/tip-jar?${TIP_RECIPIENT_QS}`);
     expect(res.status).toBe(200);
     expect(res.headers['x-ckb-action']).toBe('true');
     expect(res.body.type).toBe('action');
@@ -61,17 +65,23 @@ describe('GET /actions/tip-jar (mounted example)', () => {
   });
 
   it('returns hrefs rooted at the configured mount path', async () => {
-    const res = await request(app).get('/actions/tip-jar');
+    const res = await request(app).get(`/actions/tip-jar?${TIP_RECIPIENT_QS}`);
     for (const action of res.body.links.actions) {
       expect(action.href.startsWith('/actions/tip-jar/submit')).toBe(true);
     }
   });
+
+  it('returns 400 INVALID_PARAMS when no recipient is supplied', async () => {
+    const res = await request(app).get('/actions/tip-jar');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('INVALID_PARAMS');
+  });
 });
 
 describe('POST /actions/tip-jar/submit (mounted example)', () => {
-  it('returns 400 INVALID_ADDRESS for a malformed address', async () => {
+  it('returns 400 INVALID_ADDRESS for a malformed consumer address', async () => {
     const res = await request(app)
-      .post('/actions/tip-jar/submit?amount=100')
+      .post(`/actions/tip-jar/submit?amount=100&${TIP_RECIPIENT_QS}`)
       .send({ address: 'not-a-ckb-address' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('INVALID_ADDRESS');
