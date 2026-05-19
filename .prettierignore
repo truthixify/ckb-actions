@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Authored docs — don't reflow
+CLAUDE.md
+spec.md
