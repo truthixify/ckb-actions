@@ -57,6 +57,9 @@ export function buildInvoiceRouter({
       return;
     }
     res.setHeader(X_CKB_ACTION_HEADER, 'true');
+    // Invoice manifests don't change once created; the paid-state transition
+    // only affects POST /submit, not the manifest body. 60s matches §8.
+    res.setHeader('Cache-Control', 'public, max-age=60');
     res.json(buildInvoiceManifest(baseUrl, invoice));
   });
 

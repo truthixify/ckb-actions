@@ -37,6 +37,7 @@ export function buildTipJarRouter(baseUrl: string): Router {
     void validateRecipient(req.query.recipient)
       .then((recipient) => {
         res.setHeader(X_CKB_ACTION_HEADER, 'true');
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json(buildTipJarManifest(baseUrl, recipient));
       })
       .catch(next);

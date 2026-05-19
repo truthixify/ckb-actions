@@ -26,6 +26,7 @@ export function buildDobMintRouter(baseUrl: string): Router {
 
   router.get('/', (_req, res) => {
     res.setHeader(X_CKB_ACTION_HEADER, 'true');
+    res.setHeader('Cache-Control', 'public, max-age=60');
     res.json(manifest);
   });
 
