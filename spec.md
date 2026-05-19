@@ -262,6 +262,8 @@ The Manifest does not include cryptographic publisher identity. Trust is anchore
 - How to handle Fiber Network payments alongside L1 actions, since Fiber payments are not on-chain transactions but channel state updates. A future companion spec may define `fiber-action:` URLs.
 - Whether to support actions that require the consumer to provide a specific cell (e.g. "burn this NFT").
 - Which parameter `type` values are normative beyond `number` and `select` shown in §6.1's example. The reference SDK currently accepts `text`, `number`, and `select`. Candidates for future inclusion: `email`, `url`, `boolean`, `date`, `textarea`.
+- Whether to specify a normative encoding for binary OTX bodies (`encoding: "molecule"`). The reference SDK enforces `0x`-prefixed hex on the wire because JSON cannot carry raw bytes; alternatives (base64, base64url) would shrink payload at the cost of legibility. The spec's prose says "binary" without committing to an encoding.
+- Whether the reference DOB mint example should pin canonical Spore protocol type-script code hashes for each network (mainnet, testnet, devnet) in the spec, or leave that to publishers and the Spore project's own documentation. The current reference uses placeholder hashes for illustration only.
 
 ## 13. References
 
