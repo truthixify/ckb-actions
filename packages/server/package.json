@@ -14,7 +14,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ckb-actions/example-tip-jar": "workspace:*",
     "@ckb-actions/sdk": "workspace:*",
+    "@ckb-ccc/core": "^1.12.5",
     "cors": "^2.8.5",
     "express": "^5.0.0",
     "zod": "^4.4.3"

@@ -1,3 +1,4 @@
+import { buildTipJarRouter } from '@ckb-actions/example-tip-jar';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import type { Config } from './config.js';
@@ -6,6 +7,8 @@ import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { requestLoggerMiddleware } from './middleware/logger.js';
 import { requestIdMiddleware } from './middleware/request-id.js';
 import { healthRouter } from './routes/health.js';
+
+const TIP_JAR_MOUNT = '/actions/tip-jar';
 
 const JSON_BODY_LIMIT = '64kb';
 
@@ -34,6 +37,7 @@ export function createApp({ config, logger }: AppDeps): Express {
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.use(healthRouter);
+  app.use(TIP_JAR_MOUNT, buildTipJarRouter(TIP_JAR_MOUNT));
 
   app.use(errorHandlerMiddleware(logger));
 
