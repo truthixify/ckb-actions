@@ -39,3 +39,6 @@ yarn-error.log*
 .turbo/
 .vite/
 .vitest-cache/
+
+# Scratch / reference checkouts
+tmp/

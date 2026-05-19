@@ -11,6 +11,7 @@ export default [
       '**/node_modules/**',
       '**/.vite/**',
       'pnpm-lock.yaml',
+      'tmp/**',
     ],
   },
   js.configs.recommended,
