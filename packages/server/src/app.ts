@@ -1,3 +1,4 @@
+import { buildDobMintRouter } from '@ckb-actions/example-dob-mint';
 import { buildInvoiceRouter } from '@ckb-actions/example-invoice';
 import { buildTipJarRouter } from '@ckb-actions/example-tip-jar';
 import cors from 'cors';
@@ -11,6 +12,7 @@ import { healthRouter } from './routes/health.js';
 
 const TIP_JAR_MOUNT = '/actions/tip-jar';
 const INVOICE_MOUNT = '/actions/invoice';
+const DOB_MINT_MOUNT = '/actions/dob-mint';
 
 const JSON_BODY_LIMIT = '64kb';
 
@@ -41,6 +43,7 @@ export function createApp({ config, logger }: AppDeps): Express {
   app.use(healthRouter);
   app.use(TIP_JAR_MOUNT, buildTipJarRouter(TIP_JAR_MOUNT));
   app.use(INVOICE_MOUNT, buildInvoiceRouter({ baseUrl: INVOICE_MOUNT }).router);
+  app.use(DOB_MINT_MOUNT, buildDobMintRouter(DOB_MINT_MOUNT));
 
   app.use(errorHandlerMiddleware(logger));
 

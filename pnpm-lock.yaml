@@ -33,6 +33,31 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@25.9.1)(vite@8.0.13(@types/node@25.9.1)(esbuild@0.28.0)(tsx@4.22.3))
 
+  examples/dob-mint:
+    dependencies:
+      '@ckb-actions/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@ckb-ccc/core':
+        specifier: ^1.12.5
+        version: 1.12.5(typescript@6.0.3)(zod@4.4.3)
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
+      supertest:
+        specifier: ^7.0.0
+        version: 7.2.2
+
   examples/invoice:
     dependencies:
       '@ckb-actions/sdk':
@@ -91,6 +116,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@ckb-actions/example-dob-mint':
+        specifier: workspace:*
+        version: link:../../examples/dob-mint
       '@ckb-actions/example-invoice':
         specifier: workspace:*
         version: link:../../examples/invoice
