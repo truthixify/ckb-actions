@@ -1,9 +1,12 @@
 import { useActionStore } from './lib/store';
+import { CreateInvoiceForm } from './components/CreateInvoiceForm';
+import { CreateTipForm } from './components/CreateTipForm';
 import { ManifestCard } from './components/ManifestCard';
 import { UrlInput } from './components/UrlInput';
+import { ViewSwitch } from './components/ViewSwitch';
 
 export function App() {
-  const { phase, error } = useActionStore();
+  const { view, phase, error } = useActionStore();
 
   return (
     <div className="min-h-screen px-4 py-10">
@@ -11,22 +14,37 @@ export function App() {
         <header className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">CKB Action Links</h1>
           <p className="text-sm text-slate-600">
-            Paste an action URL to preview the transaction. The wallet signs and submits.
+            {view === 'preview'
+              ? 'Paste an action URL to preview the transaction; the wallet signs and submits.'
+              : 'Generate a shareable URL someone can open to pay you.'}
           </p>
         </header>
 
-        <UrlInput />
+        <ViewSwitch />
 
-        {phase === 'fetching' && <p className="text-sm text-slate-500">Fetching manifest…</p>}
+        {view === 'preview' && (
+          <>
+            <UrlInput />
 
-        {phase === 'error' && error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm">
-            <div className="font-medium text-rose-900">{error.tag}</div>
-            <div className="mt-0.5 text-rose-800">{error.message}</div>
-          </div>
+            {phase === 'fetching' && <p className="text-sm text-slate-500">Fetching manifest…</p>}
+
+            {phase === 'error' && error && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm">
+                <div className="font-medium text-rose-900">{error.tag}</div>
+                <div className="mt-0.5 text-rose-800">{error.message}</div>
+              </div>
+            )}
+
+            <ManifestCard />
+          </>
         )}
 
-        <ManifestCard />
+        {view === 'create' && (
+          <>
+            <CreateTipForm />
+            <CreateInvoiceForm />
+          </>
+        )}
       </div>
     </div>
   );
