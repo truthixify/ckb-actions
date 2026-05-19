@@ -6,14 +6,13 @@ import { postCallback, submitAction } from '../lib/api';
 import { friendlyMessage } from '../lib/errors';
 import { isParamsComplete, useActionStore } from '../lib/store';
 import { cn, explorerTxUrl, truncateMiddle } from '../lib/utils';
+import { pollConfirmation, preflightExistingInputs } from '../lib/wallet';
 import { Button } from './ds/Button';
 import { Card } from './ds/Card';
 import { MonoValue } from './ds/Mono';
 import { StatusDot } from './ds/StatusDot';
 
 const NETWORK_PREFIX: Record<Network, string> = { mainnet: 'ckb', testnet: 'ckt' };
-const CONFIRM_TIMEOUT_MS = 180_000;
-const CONFIRM_INTERVAL_MS = 4_000;
 
 interface SubmitPanelProps {
   action: ActionItem;
@@ -104,60 +103,12 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
     }
   }
 
-  async function preflightExistingInputs(tx: ccc.Transaction): Promise<void> {
-    if (!signer || tx.inputs.length === 0) return;
-    for (const [idx, input] of tx.inputs.entries()) {
-      const cell = await signer.client.getCell(input.previousOutput);
-      if (!cell) {
-        const ref = `${input.previousOutput.txHash.slice(0, 10)}…:${input.previousOutput.index.toString()}`;
-        throw new Error(
-          `Publisher-supplied input ${idx} (${ref}) does not exist on chain. This action's OTX appears to use placeholder data and cannot be submitted as-is.`,
-        );
-      }
-    }
-  }
-
-  async function pollConfirmation(hash: string): Promise<void> {
-    if (!signer) return;
-    try {
-      const result = await signer.client.waitTransaction(
-        hash,
-        0,
-        CONFIRM_TIMEOUT_MS,
-        CONFIRM_INTERVAL_MS,
-      );
-      if (!result) return;
-      if (result.status === 'committed') {
-        setConfirmed(result.blockNumber?.toString() ?? '?');
-        return;
-      }
-      if (result.status === 'rejected') {
-        setError({
-          tag: 'rejected',
-          message: `Node rejected the transaction: ${result.reason ?? 'no reason given'}`,
-        });
-        return;
-      }
-      if (result.status === 'unknown') {
-        setError({
-          tag: 'dropped',
-          message: 'Transaction dropped from the mempool before confirming.',
-        });
-        return;
-      }
-    } catch (err) {
-      // Confirmation polling failure is non-fatal — the tx is on chain
-      // regardless. Log but don't overwrite the 'sent' success state.
-      console.warn('confirmation polling failed', err);
-    }
-  }
-
   async function onSignAndSend() {
     if (!response || !signer) return;
     setSigning();
     try {
       const tx = ccc.Transaction.fromBytes(ccc.bytesFrom(response.otx));
-      await preflightExistingInputs(tx);
+      await preflightExistingInputs(tx.inputs, signer.client);
       await tx.completeInputsByCapacity(signer);
       await tx.completeFeeBy(signer);
       const hash = await signer.sendTransaction(tx as unknown as CccTx);
@@ -167,7 +118,20 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
           console.warn('callback POST failed; tx already on chain');
         });
       }
-      void pollConfirmation(hash);
+      void pollConfirmation(signer.client, hash, {
+        onConfirmed: (blockNumber) => setConfirmed(blockNumber),
+        onRejected: (reason) =>
+          setError({ tag: 'rejected', message: `Node rejected the transaction: ${reason}` }),
+        onDropped: () =>
+          setError({
+            tag: 'dropped',
+            message: 'Transaction dropped from the mempool before confirming.',
+          }),
+        onTransient: (err) => {
+          // The tx is on chain; polling errors are non-fatal.
+          console.warn('confirmation polling failed', err);
+        },
+      });
     } catch (err) {
       setError(friendlyMessage(err));
     }
