@@ -1,8 +1,9 @@
-import { SdkError, UnsupportedNetworkError, type ActionItem, type Network } from '@ckb-actions/sdk';
+import { UnsupportedNetworkError, type ActionItem, type Network } from '@ckb-actions/sdk';
 import { ccc } from '@ckb-ccc/connector-react';
 import { ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { postCallback, submitAction } from '../lib/api';
+import { friendlyMessage } from '../lib/errors';
 import { isParamsComplete, useActionStore } from '../lib/store';
 import { cn, explorerTxUrl, truncateMiddle } from '../lib/utils';
 import { Button } from './ds/Button';
@@ -11,10 +12,14 @@ import { MonoValue } from './ds/Mono';
 import { StatusDot } from './ds/StatusDot';
 
 const NETWORK_PREFIX: Record<Network, string> = { mainnet: 'ckb', testnet: 'ckt' };
+const CONFIRM_TIMEOUT_MS = 180_000;
+const CONFIRM_INTERVAL_MS = 4_000;
 
 interface SubmitPanelProps {
   action: ActionItem;
 }
+
+type CccTx = Parameters<NonNullable<ReturnType<typeof ccc.useSigner>>['sendTransaction']>[0];
 
 export function SubmitPanel({ action }: SubmitPanelProps) {
   const signer = ccc.useSigner();
@@ -26,11 +31,13 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
     phase,
     response,
     txHash,
+    blockNumber,
     error,
     setSubmitting,
     setResponse,
     setSigning,
     setSent,
+    setConfirmed,
     setError,
   } = useActionStore();
 
@@ -47,10 +54,7 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
         const addr = await signer.getRecommendedAddress();
         if (!cancelled) setAddress(addr);
       } catch (err) {
-        if (!cancelled) {
-          const message = err instanceof Error ? err.message : String(err);
-          setError({ tag: 'unknown', message });
-        }
+        if (!cancelled) setError(friendlyMessage(err));
       }
     }
     void loadAddress();
@@ -96,9 +100,55 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
       const res = await submitAction(url, action, paramValues, address!);
       setResponse(res);
     } catch (err) {
-      const tag = err instanceof SdkError ? err.tag : 'unknown';
-      const message = err instanceof Error ? err.message : String(err);
-      setError({ tag, message });
+      setError(friendlyMessage(err));
+    }
+  }
+
+  async function preflightExistingInputs(tx: ccc.Transaction): Promise<void> {
+    if (!signer || tx.inputs.length === 0) return;
+    for (const [idx, input] of tx.inputs.entries()) {
+      const cell = await signer.client.getCell(input.previousOutput);
+      if (!cell) {
+        const ref = `${input.previousOutput.txHash.slice(0, 10)}…:${input.previousOutput.index.toString()}`;
+        throw new Error(
+          `Publisher-supplied input ${idx} (${ref}) does not exist on chain. This action's OTX appears to use placeholder data and cannot be submitted as-is.`,
+        );
+      }
+    }
+  }
+
+  async function pollConfirmation(hash: string): Promise<void> {
+    if (!signer) return;
+    try {
+      const result = await signer.client.waitTransaction(
+        hash,
+        0,
+        CONFIRM_TIMEOUT_MS,
+        CONFIRM_INTERVAL_MS,
+      );
+      if (!result) return;
+      if (result.status === 'committed') {
+        setConfirmed(result.blockNumber?.toString() ?? '?');
+        return;
+      }
+      if (result.status === 'rejected') {
+        setError({
+          tag: 'rejected',
+          message: `Node rejected the transaction: ${result.reason ?? 'no reason given'}`,
+        });
+        return;
+      }
+      if (result.status === 'unknown') {
+        setError({
+          tag: 'dropped',
+          message: 'Transaction dropped from the mempool before confirming.',
+        });
+        return;
+      }
+    } catch (err) {
+      // Confirmation polling failure is non-fatal — the tx is on chain
+      // regardless. Log but don't overwrite the 'sent' success state.
+      console.warn('confirmation polling failed', err);
     }
   }
 
@@ -107,20 +157,19 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
     setSigning();
     try {
       const tx = ccc.Transaction.fromBytes(ccc.bytesFrom(response.otx));
+      await preflightExistingInputs(tx);
       await tx.completeInputsByCapacity(signer);
       await tx.completeFeeBy(signer);
-      const txLike = tx as unknown as Parameters<typeof signer.sendTransaction>[0];
-      const hash = await signer.sendTransaction(txLike);
+      const hash = await signer.sendTransaction(tx as unknown as CccTx);
       setSent(hash);
       if (response.callback) {
         await postCallback(url, response.callback, hash).catch(() => {
           console.warn('callback POST failed; tx already on chain');
         });
       }
+      void pollConfirmation(hash);
     } catch (err) {
-      const tag = err instanceof SdkError ? err.tag : 'wallet_error';
-      const message = err instanceof Error ? err.message : String(err);
-      setError({ tag, message });
+      setError(friendlyMessage(err));
     }
   }
 
@@ -183,11 +232,17 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
         </Card>
       )}
 
-      {phase === 'sent' && txHash && manifest && (
+      {(phase === 'sent' || phase === 'confirmed') && txHash && manifest && (
         <Card variant="surface" padding="default" className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <StatusDot tone="success" size={10} />
-            <span className="text-heading-3">Transaction submitted</span>
+            <StatusDot
+              tone={phase === 'confirmed' ? 'success' : 'accent'}
+              size={10}
+              pulse={phase === 'sent'}
+            />
+            <span className="text-heading-3">
+              {phase === 'confirmed' ? 'Transaction confirmed' : 'Transaction submitted'}
+            </span>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-label text-[var(--color-text-secondary)]">Hash</span>
@@ -206,6 +261,17 @@ export function SubmitPanel({ action }: SubmitPanelProps) {
               <ExternalLink size={14} strokeWidth={1.5} className="shrink-0" />
             </a>
           </div>
+          {phase === 'sent' && (
+            <span className="text-mono-sm text-[var(--color-text-muted)]">
+              Awaiting confirmation…
+            </span>
+          )}
+          {phase === 'confirmed' && blockNumber && (
+            <div className="flex items-center justify-between text-mono-sm text-[var(--color-text-muted)]">
+              <span className="text-label">Block</span>
+              <span>#{blockNumber}</span>
+            </div>
+          )}
         </Card>
       )}
 

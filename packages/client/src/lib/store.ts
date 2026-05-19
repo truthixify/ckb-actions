@@ -10,6 +10,7 @@ export type Phase =
   | 'received'
   | 'signing'
   | 'sent'
+  | 'confirmed'
   | 'error';
 
 export interface ActionError {
@@ -27,6 +28,7 @@ export interface ActionStoreState {
   paramValues: Record<string, ParamValue>;
   response: ActionResponse | null;
   txHash: string | null;
+  blockNumber: string | null;
   error: ActionError | null;
 }
 
@@ -40,6 +42,7 @@ export interface ActionStoreActions {
   setResponse(response: ActionResponse): void;
   setSigning(): void;
   setSent(txHash: string): void;
+  setConfirmed(blockNumber: string): void;
   startFetching(): void;
   selectAction(action: ActionItem | null): void;
   setParam(name: string, value: ParamValue): void;
@@ -56,6 +59,7 @@ const initialState: ActionStoreState = {
   paramValues: {},
   response: null,
   txHash: null,
+  blockNumber: null,
   error: null,
 };
 
@@ -65,16 +69,37 @@ export const useActionStore = create<ActionStoreState & ActionStoreActions>((set
   setServerBaseUrl: (serverBaseUrl) => set({ serverBaseUrl }),
   setUrl: (url) => set({ url }),
   startFetching: () =>
-    set({ phase: 'fetching', error: null, manifest: null, response: null, txHash: null }),
+    set({
+      phase: 'fetching',
+      error: null,
+      manifest: null,
+      response: null,
+      txHash: null,
+      blockNumber: null,
+    }),
   setManifest: (manifest) =>
     set({ manifest, phase: 'ready', error: null, selectedAction: null, paramValues: {} }),
   setError: (error) => set({ error, phase: 'error' }),
-  setSubmitting: () => set({ phase: 'submitting', error: null, response: null, txHash: null }),
+  setSubmitting: () =>
+    set({
+      phase: 'submitting',
+      error: null,
+      response: null,
+      txHash: null,
+      blockNumber: null,
+    }),
   setResponse: (response) => set({ response, phase: 'received' }),
   setSigning: () => set({ phase: 'signing', error: null }),
-  setSent: (txHash) => set({ txHash, phase: 'sent' }),
+  setSent: (txHash) => set({ txHash, phase: 'sent', blockNumber: null }),
+  setConfirmed: (blockNumber) => set({ blockNumber, phase: 'confirmed' }),
   selectAction: (action) =>
-    set({ selectedAction: action, paramValues: {}, response: null, txHash: null }),
+    set({
+      selectedAction: action,
+      paramValues: {},
+      response: null,
+      txHash: null,
+      blockNumber: null,
+    }),
   setParam: (name, value) => set((s) => ({ paramValues: { ...s.paramValues, [name]: value } })),
   reset: () => set(initialState),
 }));
