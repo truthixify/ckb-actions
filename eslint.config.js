@@ -31,6 +31,10 @@ export default [
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
+      '@typescript-eslint/no-namespace': [
+        'error',
+        { allowDeclarations: true, allowDefinitionFiles: true },
+      ],
     },
   },
 ];
