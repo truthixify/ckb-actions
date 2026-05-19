@@ -60,9 +60,8 @@ export function App() {
         </div>
       </main>
 
-      <footer className="px-6 py-4 text-mono-sm text-[var(--color-text-muted)] flex justify-between max-w-[1200px] mx-auto w-full">
+      <footer className="px-6 py-4 text-mono-sm text-[var(--color-text-muted)] max-w-[1200px] mx-auto w-full">
         <span>CKB Action Links — reference client</span>
-        <span>v0.1.0</span>
       </footer>
     </div>
   );
