@@ -261,6 +261,7 @@ The Manifest does not include cryptographic publisher identity. Trust is anchore
 - Whether to support batch actions (multiple transactions per link).
 - How to handle Fiber Network payments alongside L1 actions, since Fiber payments are not on-chain transactions but channel state updates. A future companion spec may define `fiber-action:` URLs.
 - Whether to support actions that require the consumer to provide a specific cell (e.g. "burn this NFT").
+- Which parameter `type` values are normative beyond `number` and `select` shown in §6.1's example. The reference SDK currently accepts `text`, `number`, and `select`. Candidates for future inclusion: `email`, `url`, `boolean`, `date`, `textarea`.
 
 ## 13. References
 
