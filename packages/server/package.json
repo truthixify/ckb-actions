@@ -14,6 +14,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ckb-actions/example-invoice": "workspace:*",
     "@ckb-actions/example-tip-jar": "workspace:*",
     "@ckb-actions/sdk": "workspace:*",
     "@ckb-ccc/core": "^1.12.5",
