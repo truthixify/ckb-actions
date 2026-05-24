@@ -1,0 +1,29 @@
+# Render Blueprint for the reference Action Endpoint server.
+# Deploy via the Render dashboard: New + → Blueprint → connect this repo.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: ckb-actions-server
+    runtime: node
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    # corepack reads packageManager from root package.json and activates the
+    # pinned pnpm version. Then we install the workspace and build the SDK
+    # (the only package whose main points at ./dist).
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @ckb-actions/sdk build
+    # Examples' main fields point at src/index.ts intentionally, so the
+    # server runs through tsx rather than node. tsx is in the server's
+    # runtime dependencies.
+    startCommand: pnpm --filter @ckb-actions/server start
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGIN
+        value: '*'
