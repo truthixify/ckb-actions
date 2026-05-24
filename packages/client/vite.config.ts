@@ -6,6 +6,12 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: { port: 5173 },
   build: {
+    // Emit at repo root so deploy targets (Vercel) and any
+    // monorepo-aware tooling find the build at a stable path independent
+    // of which package was invoked. emptyOutDir is required because the
+    // target sits outside this package's directory.
+    outDir: '../../dist',
+    emptyOutDir: true,
     // CCC's core + connector are the bulk of the bundle (~450kB minified
     // unsplit). Splitting them into their own chunk lets the browser cache
     // them independently and keeps the app shell well under the 500kB
